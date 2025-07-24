@@ -1,0 +1,317 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Online Voting System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/dist/face-api.min.js"></script>
+    <script src="storage.js"></script>
+    <script src="translations.js"></script>
+    <script src="authentication.js"></script>
+    <script src="biometric.js"></script>
+    <script src="admin.js"></script>
+    <script src="voter.js"></script>
+    <script src="charts.js"></script>
+    <script src="app.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="screen active">
+            <div class="login-container">
+                <div class="login-card">
+                    <h1 class="login-title">Secure Voting System</h1>
+                    <div class="language-selector">
+                        <button onclick="changeLanguage('en')" class="lang-btn active" data-lang="en">English</button>
+                        <button onclick="changeLanguage('hi')" class="lang-btn" data-lang="hi">हिंदी</button>
+                    </div>
+                    
+                    <div class="login-options">
+                        <button onclick="showAdminLogin()" class="login-type-btn admin-btn">
+                            <i class="fas fa-user-cog"></i>
+                            <span data-translate="admin_login">Admin Login</span>
+                        </button>
+                        <button onclick="showVoterLogin()" class="login-type-btn voter-btn">
+                            <i class="fas fa-vote-yea"></i>
+                            <span data-translate="voter_login">Voter Login</span>
+                        </button>
+                    </div>
+
+                    <div id="adminLoginForm" class="login-form hidden">
+                        <h3 data-translate="admin_access">Admin Access</h3>
+                        <input type="text" id="adminUsername" placeholder="Username" data-translate-placeholder="username">
+                        <input type="password" id="adminPassword" placeholder="Password" data-translate-placeholder="password">
+                        <button onclick="adminLogin()" class="submit-btn" data-translate="login">Login</button>
+                    </div>
+
+                    <div id="voterLoginForm" class="login-form hidden">
+                        <h3 data-translate="voter_access">Voter Access</h3>
+                        <input type="text" id="voterID" placeholder="Voter ID" data-translate-placeholder="voter_id">
+                        <div class="biometric-section">
+                            <button onclick="startBiometric()" class="biometric-btn">
+                                <i class="fas fa-fingerprint"></i>
+                                <span data-translate="biometric_auth">Biometric Authentication</span>
+                            </button>
+                            <div id="biometric-status" class="status-message"></div>
+                        </div>
+                        <button onclick="voterLogin()" class="submit-btn" data-translate="login">Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div id="adminDashboard" class="screen">
+            <nav class="admin-nav">
+                <div class="nav-brand">
+                    <h2 data-translate="admin_panel">Admin Panel</h2>
+                </div>
+                <div class="nav-menu">
+                    <button onclick="showAdminSection('dashboard')" class="nav-btn active" data-translate="dashboard">Dashboard</button>
+                    <button onclick="showAdminSection('parties')" class="nav-btn" data-translate="manage_parties">Manage Parties</button>
+                    <button onclick="showAdminSection('users')" class="nav-btn" data-translate="manage_users">Manage Users</button>
+                    <button onclick="showAdminSection('analytics')" class="nav-btn" data-translate="analytics">Analytics</button>
+                    <button onclick="logout()" class="nav-btn logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span data-translate="logout">Logout</span>
+                    </button>
+                </div>
+            </nav>
+
+            <main class="admin-content">
+                <!-- Dashboard Section -->
+                <div id="dashboardSection" class="admin-section active">
+                    <div class="dashboard-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-users"></i></div>
+                            <div class="stat-info">
+                                <h3 id="totalVoters">0</h3>
+                                <p data-translate="total_voters">Total Voters</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-vote-yea"></i></div>
+                            <div class="stat-info">
+                                <h3 id="totalVotes">0</h3>
+                                <p data-translate="votes_cast">Votes Cast</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-percentage"></i></div>
+                            <div class="stat-info">
+                                <h3 id="turnoutRate">0%</h3>
+                                <p data-translate="turnout_rate">Turnout Rate</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-flag"></i></div>
+                            <div class="stat-info">
+                                <h3 id="totalParties">0</h3>
+                                <p data-translate="active_parties">Active Parties</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="votingChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Parties Management Section -->
+                <div id="partiesSection" class="admin-section">
+                    <div class="section-header">
+                        <h3 data-translate="manage_parties">Manage Parties</h3>
+                        <button onclick="showAddPartyModal()" class="add-btn">
+                            <i class="fas fa-plus"></i>
+                            <span data-translate="add_party">Add Party</span>
+                        </button>
+                    </div>
+                    <div id="partiesList" class="parties-list"></div>
+                </div>
+
+                <!-- Users Management Section -->
+                <div id="usersSection" class="admin-section">
+                    <div class="section-header">
+                        <h3 data-translate="manage_users">Manage Users</h3>
+                        <button onclick="showAddUserModal()" class="add-btn">
+                            <i class="fas fa-user-plus"></i>
+                            <span data-translate="add_user">Add User</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Add biometric registration section -->
+                    <div class="biometric-registration" style="margin-bottom: 2rem;">
+                        <div class="section-header">
+                            <h4>Biometric Registration</h4>
+                            <p style="font-size: 0.9rem; color: #718096; margin-top: 0.5rem;">
+                                Register facial and fingerprint data for secure voter authentication
+                            </p>
+                        </div>
+                        <div class="biometric-options">
+                            <button onclick="startFaceRegistration()" class="biometric-btn">
+                                <i class="fas fa-camera"></i>
+                                <span>Register Face Data</span>
+                            </button>
+                            <button onclick="startFingerprintRegistration()" class="biometric-btn">
+                                <i class="fas fa-fingerprint"></i>
+                                <span>Register Fingerprint</span>
+                            </button>
+                        </div>
+                        <div id="biometricStatus" class="status-message" style="display: none;"></div>
+                    </div>
+                    
+                    <div id="usersList" class="users-list"></div>
+                </div>
+
+                <!-- Analytics Section -->
+                <div id="analyticsSection" class="admin-section">
+                    <h3 data-translate="analytics">Analytics & Reports</h3>
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h4 data-translate="regional_breakdown">Regional Breakdown</h4>
+                            <canvas id="regionalChart"></canvas>
+                        </div>
+                        <div class="analytics-card">
+                            <h4 data-translate="voting_timeline">Voting Timeline</h4>
+                            <canvas id="timelineChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Voter Dashboard -->
+        <div id="voterDashboard" class="screen">
+            <nav class="voter-nav">
+                <div class="nav-brand">
+                    <h2 data-translate="voting_portal">Voting Portal</h2>
+                </div>
+                <div class="nav-controls">
+                    <div class="language-selector">
+                        <button onclick="changeLanguage('en')" class="lang-btn" data-lang="en">English</button>
+                        <button onclick="changeLanguage('hi')" class="lang-btn" data-lang="hi">हिंदी</button>
+                    </div>
+                    <button onclick="toggleReadAloud()" class="read-aloud-btn">
+                        <i class="fas fa-volume-up"></i>
+                        <span data-translate="read_aloud">Read Aloud</span>
+                    </button>
+                    <button onclick="logout()" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span data-translate="logout">Logout</span>
+                    </button>
+                </div>
+            </nav>
+
+            <main class="voter-content">
+                <div class="voting-status" id="votingStatus">
+                    <div class="status-message success" id="votedMessage" style="display: none;">
+                        <i class="fas fa-check-circle"></i>
+                        <span data-translate="vote_confirmed">Your vote has been successfully recorded!</span>
+                    </div>
+                    <div class="status-message info" id="notVotedMessage">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-translate="select_candidate">Please select your preferred candidate below:</span>
+                    </div>
+                </div>
+
+                <div id="partiesGrid" class="parties-grid"></div>
+
+                <div id="confirmationModal" class="modal">
+                    <div class="modal-content">
+                        <h3 data-translate="confirm_vote">Confirm Your Vote</h3>
+                        <p data-translate="confirm_message">Are you sure you want to vote for:</p>
+                        <div id="selectedPartyBio" class="selected-party-info"></div>
+                        <div class="modal-actions">
+                            <button onclick="closeConfirmation()" class="cancel-btn" data-translate="cancel">Cancel</button>
+                            <button onclick="submitVote()" class="confirm-btn" data-translate="confirm_vote_btn">Confirm Vote</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Modals -->
+        <div id="biometricVoteModal" class="modal">
+            <div class="modal-content">
+                <h3 data-translate="biometric_verification">Biometric Verification</h3>
+                <p data-translate="verify_identity">Please verify your identity to cast your vote</p>
+                
+                <div class="biometric-options">
+                    <button onclick="initiateFacialRecognition()" class="biometric-btn">
+                        <i class="fas fa-camera"></i>
+                        <span data-translate="facial_recognition">Facial Recognition</span>
+                    </button>
+                    
+                    <button id="fingerprintBtn" onclick="initiateFingerprintScan()" style="display: none;" class="biometric-btn">
+                        <i class="fas fa-fingerprint"></i>
+                        <span data-translate="fingerprint_scan">Fingerprint Scan</span>
+                    </button>
+                </div>
+                
+                <div id="biometricStatus" class="status-message"></div>
+                
+                <div class="modal-actions">
+                    <button onclick="closeBiometricModal()" class="cancel-btn" data-translate="cancel">Cancel</button>
+                    <button id="confirmVoteBtn" onclick="confirmBiometricVote()" style="display: none;" class="confirm-btn" data-translate="proceed_to_vote">Proceed to Vote</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="addPartyModal" class="modal">
+            <div class="modal-content">
+                <h3 data-translate="add_new_party">Add New Party</h3>
+                <form id="addPartyForm">
+                    <input type="text" id="partyName" placeholder="Party Name" required data-translate-placeholder="party_name">
+                    <input type="text" id="candidateName" placeholder="Candidate Name" required data-translate-placeholder="candidate_name">
+                    <textarea id="partyDescription" placeholder="Party Description" data-translate-placeholder="party_description"></textarea>
+                    <input type="url" id="partyLogo" placeholder="Logo URL" data-translate-placeholder="logo_url">
+                    <div class="modal-actions">
+                        <button type="button" onclick="closeModal('addPartyModal')" class="cancel-btn" data-translate="cancel">Cancel</button>
+                        <button type="submit" class="submit-btn" data-translate="add_party">Add Party</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="addUserModal" class="modal">
+            <div class="modal-content">
+                <h3 data-translate="add_new_user">Add New User</h3>
+                <form id="addUserForm">
+                    <input type="text" id="userName" placeholder="Full Name" required data-translate-placeholder="full_name">
+                    <input type="text" id="userID" placeholder="Voter ID" required data-translate-placeholder="voter_id">
+                    <input type="email" id="userEmail" placeholder="Email" required data-translate-placeholder="email">
+                    <input type="tel" id="userPhone" placeholder="Phone Number" data-translate-placeholder="phone_number">
+                    <div class="modal-actions">
+                        <button type="button" onclick="closeModal('addUserModal')" class="cancel-btn" data-translate="cancel">Cancel</button>
+                        <button type="submit" class="submit-btn" data-translate="add_user">Add User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add video element for facial capture -->
+        <div id="videoModal" class="modal">
+            <div class="modal-content">
+                <h3>Capture Face Data</h3>
+                <p style="color: #718096; margin-bottom: 1rem;">
+                    Position your face in the center of the camera. The system will capture multiple samples for accurate recognition.
+                </p>
+                <div class="video-container">
+                    <video id="video" autoplay muted></video>
+                    <canvas id="overlay" width="640" height="480"></canvas>
+                </div>
+                <div id="captureProgress" class="progress-bar" style="display: none;">
+                    <div class="progress-fill" id="progressBar"></div>
+                </div>
+                <input type="text" id="personName" placeholder="Enter User ID" required>
+                <div class="modal-actions">
+                    <button onclick="closeVideoModal()" class="cancel-btn">Cancel</button>
+                    <button onclick="captureAndRegisterFace()" class="confirm-btn">Start Capture</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
