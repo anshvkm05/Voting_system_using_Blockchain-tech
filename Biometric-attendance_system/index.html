@@ -1,0 +1,77 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biometric Attendance System</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1/dist/face-api.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Biometric Attendance System</h1>
+    
+    <div class="attendance-panel">
+      <div class="camera-select-container">
+        <select id="cameraSelect">
+          <option value="">Loading cameras...</option>
+        </select>
+      </div>
+      
+      <div class="video-container">
+        <video id="video" width="640" height="480" autoplay></video>
+        <canvas id="overlay" width="640" height="480"></canvas>
+      </div>
+
+      <div class="controls">
+        <button id="registerBtn">Register New Face</button>
+        <button id="markAttendanceBtn">Mark Attendance</button>
+      </div>
+
+      <div id="status" class="status"></div>
+    </div>
+
+    <div class="attendance-list">
+      <h2>Attendance Records</h2>
+      <div class="attendance-controls">
+        <input type="date" id="dateFilter" class="date-filter">
+        <button id="exportBtn" class="export-btn">Export Records</button>
+        <button id="saveRecordsBtn" class="save-btn">Save Today's Records</button>
+      </div>
+      <div class="filter-status"></div>
+      <table id="attendanceTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Confidence</th>
+          </tr>
+        </thead>
+        <tbody id="attendanceData">
+        </tbody>
+      </table>
+    </div>
+
+    <div id="registerModal" class="modal">
+      <div class="modal-content">
+        <h2>Register New Face</h2>
+        <input type="text" id="personName" placeholder="Enter person's name">
+        <div id="captureProgress" class="progress-container">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+        <button id="captureBtn">Capture Face</button>
+        <button id="cancelRegister">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Check if the browser supports the File System Access API
+    if (!('showDirectoryPicker' in window)) {
+      alert('Your browser does not support the File System Access API. Please use a modern browser like Chrome.');
+    }
+  </script>
+  <script src="storage.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
